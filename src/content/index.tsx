@@ -1,10 +1,8 @@
 import React from 'react'
 import browser from 'webextension-polyfill'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import Action from './Action'
 import './index.css'
-
-import Button from './components/Button'
 
 // const pluginTagId = 'youtube-blacklist'
 // const existingInstance = document.getElementById('youtube-blacklist')
@@ -42,7 +40,7 @@ async function main() {
     span.className = 'inline-metadata-item style-scope ytd-video-meta-block'
     metadataLine?.append(span)
     ReactDOM.createRoot(span).render(
-      <Button
+      <Action
         channel={{ name: channelName || '', href: channelHref }}
         video={{ title: videoTitle, href: videoHref }}
       />
