@@ -1,15 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  important: '#extension-root',
-  content: ['./content-script/**/*.{js,ts,jsx,tsx}'],
-  theme: {
-    container: {
-      padding: '2rem'
-    }
+  corePlugins: {
+    preflight: false
   },
-  plugins: [
-    require('@tailwindcss/forms')({
-      strategy: 'class'
-    })
-  ]
+  prefix: 'ybb-',
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {}
+  },
+  plugins: [require('prettier-plugin-tailwindcss')]
 }

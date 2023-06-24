@@ -1,32 +1,22 @@
 {
-  "name": "Cat Facts",
-  "description": "Learn random facts about cats",
-  "version": "1.0.0",
-  "manifest_version": 2,
-  "browser_action": {
-    "default_popup": "index.html",
-    "default_title": "Open the popup"
+  "name": "Youtube Blacklist",
+  "description": "Block certain channels from appearing on YouTube.",
+  "version": "0.0.1",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "./src/popup/index.html",
+    "default_title": "Youtube Blacklist"
   },
-  "optional_permissions": [
-    "<all_urls>"
-  ],
   "content_scripts": [
     {
-      "matches": [
-        "https://blank.org/*"
-      ],
-      "run_at": "document_end",
-      "js": [
-        "./index.global.js"
-      ],
-      "css": [
-        "./style.css"
-      ]
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["./content.js"],
+      "css": ["./style.css"]
     }
   ],
+  "permissions": ["storage"],
   "background": {
-    "page": "background.html",
-    "persistent": false
+    "service_worker": "./background.js"
   },
   "icons": {
     "128": "logo128.png"

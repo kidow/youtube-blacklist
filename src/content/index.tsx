@@ -24,8 +24,4 @@ if (body) {
   body.append(index)
 }
 
-ReactDOM.createRoot(index).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+ReactDOM.createRoot(index).render(<App />)
