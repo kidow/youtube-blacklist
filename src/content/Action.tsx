@@ -61,7 +61,7 @@ const Action: FC<Props> = ({ channel, video }) => {
                     이 동영상을 차단합니까?
                   </div>
                   <div className="space-y-4 rounded-lg border border-solid border-neutral-700 p-6">
-                    <div className="text-[16px] font-medium text-[#f1f1f1]">
+                    <div className="line-clamp-2 text-[16px] font-medium text-[#f1f1f1]">
                       {video.title}
                     </div>
                     <div className="text-[14px] text-[#aaa]">
