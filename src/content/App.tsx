@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import type { FC } from 'react'
 import { createPortal } from 'react-dom'
 import browser from 'webextension-polyfill'
+import { useObjectState } from '../services'
+
 import Switch from './components/Switch'
 import Button from './components/Button'
-import { useObjectState } from '../services'
 
 interface State {
   isOpen: boolean
@@ -31,84 +32,85 @@ const App: FC = () => {
   })
 
   const setup = async () => {
-    const data = await browser.storage.sync.get('blacklist')
-    console.log('data', data)
+    const storage = await browser.storage.sync.get(['channels', 'videos'])
+    const channels: IChannel[] = storage.channels || []
+    const videos: IVideo[] = storage.videos || []
 
     const list = document.querySelectorAll('ytd-rich-grid-media')
     for (const item of list) {
       const metadataLine = item.querySelector(
         '#dismissible>#details>#meta>ytd-video-meta-block>#metadata>#metadata-line'
       )
-      const span = document.createElement('span')
-      span.className = 'inline-metadata-item style-scope ytd-video-meta-block'
-      // @ts-ignore
-      span.role = 'button'
-      span.tabIndex = 0
-      span.onclick = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        const video =
-          span.parentElement?.parentElement?.parentElement?.previousElementSibling?.querySelector(
-            '#video-title-link'
+      if (channels?.length > 0) {
+        const channelHref = (
+          item.querySelector(
+            '#dismissible>#details>#avatar-link'
           ) as HTMLAnchorElement
-        const channel = span.parentElement?.parentElement?.parentElement
-          ?.parentElement?.previousElementSibling as HTMLAnchorElement
-        setState({
-          isOpen: true,
-          videoHref: video?.href || '',
-          videoTitle: video?.textContent || '',
-          channelHref: channel?.href || '',
-          channelName: channel?.title || ''
-        })
+        )?.href
+        for (const channel of channels) {
+          if (channel.href === channelHref) {
+            item?.parentElement?.parentElement?.remove()
+          }
+        }
+      } else if (videos?.length > 0) {
+        const videoHref = (
+          item.querySelector(
+            '#dismissible>#details>#meta>h3>#video-title-link'
+          ) as HTMLAnchorElement
+        )?.href
+        for (const video of videos) {
+          if (video.href === videoHref) {
+            item?.parentElement?.parentElement?.remove()
+          }
+        }
       }
-      span.textContent = '차단'
+      const span = generateButton()
       metadataLine?.append(span)
     }
 
     mutationObserve()
   }
 
+  const generateButton = (): HTMLSpanElement => {
+    const span = document.createElement('span')
+    span.id = 'blacklist-button'
+    span.className = 'inline-metadata-item style-scope ytd-video-meta-block'
+    // @ts-ignore
+    span.role = 'button'
+    span.tabIndex = 0
+    span.onclick = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const video =
+        span.parentElement?.parentElement?.parentElement?.previousElementSibling?.querySelector(
+          '#video-title-link'
+        ) as HTMLAnchorElement
+      const channel = span.parentElement?.parentElement?.parentElement
+        ?.parentElement?.previousElementSibling as HTMLAnchorElement
+      setState({
+        isOpen: true,
+        videoHref: video?.href || '',
+        videoTitle: video?.textContent || '',
+        channelHref: channel?.href || '',
+        channelName: channel?.title || ''
+      })
+    }
+    span.textContent = '차단'
+    return span
+  }
+
   const mutationObserve = () => {
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        for (const addedNode of mutation.addedNodes) {
-          if (addedNode.nodeName === 'YTD-RICH-GRID-ROW') {
+        if (mutation.target.nodeName === 'YTD-RICH-GRID-MEDIA') {
+          const span = generateButton()
+          const metadataLine = mutation.target
             // @ts-ignore
-            const contents = addedNode.querySelector('#contents') as Element
-            for (const item of contents.children) {
-              const metadataLine = item.querySelector(
-                '#content>ytd-rich-grid-media>#dismissible>#details>#meta>ytd-video-meta-block>#metadata>#metadata-line'
-              )
-              metadataLine?.querySelectorAll('span')?.forEach((span) => {
-                if (span.textContent === '차단') return
-              })
-              const span = document.createElement('span')
-              span.className =
-                'inline-metadata-item style-scope ytd-video-meta-block'
-              // @ts-ignore
-              span.role = 'button'
-              span.tabIndex = 0
-              span.onclick = (e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                const video =
-                  span.parentElement?.parentElement?.parentElement?.previousElementSibling?.querySelector(
-                    '#video-title-link'
-                  ) as HTMLAnchorElement
-                const channel = span.parentElement?.parentElement?.parentElement
-                  ?.parentElement?.previousElementSibling as HTMLAnchorElement
-                setState({
-                  isOpen: true,
-                  videoHref: video?.href || '',
-                  videoTitle: video?.textContent || '',
-                  channelHref: channel?.href || '',
-                  channelName: channel?.title || ''
-                })
-              }
-              span.textContent = '차단'
-              metadataLine?.append(span)
-            }
-          }
+            .querySelector(
+              '#dismissible>#details>#meta>ytd-video-meta-block>#metadata>#metadata-line'
+            )
+          if (metadataLine?.querySelector('#blacklist-button')) return
+          metadataLine?.append(span)
         }
       }
     })
@@ -119,9 +121,18 @@ const App: FC = () => {
   }
 
   const block = async () => {
-    const storage = await browser.storage.sync.get('blacklist')
+    const storage = await browser.storage.sync.get(['channels', 'videos'])
+    console.log('storage', storage)
+    const channels: IChannel[] = storage.channels || []
+    const videos: IVideo[] = storage.videos || []
     if (checked) {
+      await browser.storage.sync.set({
+        channels: [...channels, { href: channelHref, name: channelName }]
+      })
     } else {
+      await browser.storage.sync.set({
+        videos: [...videos, { href: videoHref, title: videoTitle }]
+      })
     }
   }
 
